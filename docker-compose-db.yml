@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  db:
+    image: 'postgres:latest'
+    container_name: db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=username
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=turnover
+  mock_db:
+    image: 'postgres:latest'
+    container_name: mock_db
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=username
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=turnover
+
