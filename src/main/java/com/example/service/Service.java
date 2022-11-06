@@ -23,9 +23,13 @@ import java.util.Date;
 @org.springframework.stereotype.Service
 public class Service {
 
-    private String EUR = "EUR";
-    private CommisionsRepository commissionsRepository;
-    private ExchangeClient exchangeClient;
+    private static final String EUR = "EUR";
+    private static final BigDecimal STANDARD_COMMISSION = BigDecimal.valueOf(0.005);
+    private static final BigDecimal MINIMUM_AMOUNT = BigDecimal.valueOf(0.05);
+    private static final BigDecimal RULE3_COMMISSION = BigDecimal.valueOf(0.03);
+
+    private final CommisionsRepository commissionsRepository;
+    private final ExchangeClient exchangeClient;
 
     public Service(CommisionsRepository commissionsRepository, ExchangeClient exchangeClient) {
         this.commissionsRepository = commissionsRepository;
@@ -46,6 +50,8 @@ public class Service {
         BigDecimal thisTransactionAmount = requestBody.amount();
         BigDecimal thisTransactionAmountInEUR;
         int clientId = requestBody.client_id();
+        boolean isClientId42 = clientId == 42;
+
         if (!thisTransactionCurrency.equals(EUR)) {
             BigDecimal currencyRateObject = getRates(requestBody).getRates().get(thisTransactionCurrency);
             thisTransactionAmountInEUR = thisTransactionAmount.divide(currencyRateObject, 2, RoundingMode.CEILING);
@@ -56,15 +62,13 @@ public class Service {
 
         // CALCULATE COMMISSIONS
         // Rule #1: Default pricing
-        BigDecimal rule1Commission = thisTransactionAmountInEUR.multiply(BigDecimal.valueOf(0.005));
-        if (rule1Commission.compareTo(BigDecimal.valueOf(0.05)) == -1)
-            rule1Commission = BigDecimal.valueOf(0.05);
+        BigDecimal rule1Commission = thisTransactionAmountInEUR.multiply(STANDARD_COMMISSION).max(MINIMUM_AMOUNT);
 
         // Rule #2: Client with a discount
         BigDecimal rule2Commission = BigDecimal.ZERO;
-        boolean isClientId42 = clientId == 42;
-        if (isClientId42)
-            rule2Commission = BigDecimal.valueOf(0.05);
+
+//        if (clientId == 42)
+//            rule2Commission = MINIMUM_AMOUNT;
 
         // Rule #3: High turnover discount
         SimpleDateFormat simpleDateFormatYearMonth = new SimpleDateFormat("yyyy-MM");
@@ -82,7 +86,7 @@ public class Service {
         log.info("Client client_id {} processed monthly turnover was {} {}", clientId, alreadyProcessedMonthlyTurnoverPerClient, EUR);
         if (monthlyTurnoverOf1000EUROHasBeenReached) {
             // commission is = 0,03 EUR for the current transaction
-            rule3Commission = BigDecimal.valueOf(0.03);
+            rule3Commission = RULE3_COMMISSION;
         }
 
         // APPLY COMMISSIONS RULES
@@ -90,7 +94,7 @@ public class Service {
         CommissionApplied commissionAppliedRule;
         if (isClientId42) {
             if (!monthlyTurnoverOf1000EUROHasBeenReached) {
-                resultCommission = rule2Commission;
+                resultCommission = MINIMUM_AMOUNT;
                 commissionAppliedRule = CommissionApplied.RULE2;
             } else {
                 if (rule1Commission.compareTo(rule3Commission) == -1) {
@@ -134,4 +138,5 @@ public class Service {
             throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "Getting currency rates failed.");
         return ratesEntity.getBody();
     }
+
 }
