@@ -6,7 +6,6 @@ import com.example.data.RateDto;
 import com.example.data.RequestType;
 import com.example.data.ResponseType;
 import com.example.repository.CommisionsRepository;
-import com.google.gson.Gson;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -21,7 +20,6 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Map;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
@@ -39,29 +37,10 @@ class ServiceTest {
 	@MockBean
 	private ExchangeClient exchangeClient;
 
-	String responseBody = """
-			{
-				"motd": {
-					"msg": "If you or your company use this project or like what we doing, please consider backing us so we can continue maintaining and evolving this project.",
-					"url": "https://exchangerate.host/#/donate"
-				},
-				"success": true,
-				"historical": true,
-				"base": "EUR",
-				"date": "2021-01-01",
-				"rates": {
-					"AED": 4.472422,
-					"ALL": 123.368069,
-					"PLN":4.570522
-				}
-			}
-			""";
-
 	private final String amountCurrency = "PLN";
 
 	static Date requestedDate;
 	static String dateYearMonth;
-	private final Map responseBodyMap = new Gson().fromJson(responseBody, Map.class);
 
 	@BeforeAll
 	static void beforeAll(){

@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Slf4j
@@ -22,8 +23,10 @@ public class ExchangeClient {
     private RestTemplate restTemplate;
 
     @Cacheable(value = "rates")
-    public ResponseEntity<RateDto> getRates(Date date) {
+    public ResponseEntity<RateDto> getRates(Date requestedDate) {
         log.info("Retrieving rates from external API");
-        return restTemplate.exchange("https://api.exchangerate.host/" + date, HttpMethod.GET, HttpEntity.EMPTY, RateDto.class);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String dateYearMonthDay = simpleDateFormat.format(requestedDate);
+        return restTemplate.exchange("https://api.exchangerate.host/" + dateYearMonthDay, HttpMethod.GET, HttpEntity.EMPTY, RateDto.class);
     }
 }
