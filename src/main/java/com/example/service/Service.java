@@ -1,37 +1,50 @@
 package com.example.service;
 
+import com.example.client.ExchangeClient;
 import com.example.data.CommissionApplied;
 import com.example.data.CommissionType;
+import com.example.data.RateDto;
 import com.example.data.RequestType;
 import com.example.data.ResponseType;
 import com.example.repository.CommisionsRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.Map;
 
 @Slf4j
+
 @org.springframework.stereotype.Service
 public class Service {
 
     private String EUR = "EUR";
-    @Autowired
+    CacheManager cacheManager;
     private RestTemplate restTemplate;
-    @Autowired
     private CommisionsRepository commissionsRepository;
+    private ExchangeClient exchangeClient;
+
+    public Service(CacheManager cacheManager, RestTemplate restTemplate, CommisionsRepository commissionsRepository, ExchangeClient exchangeClient) {
+        this.cacheManager = cacheManager;
+        this.restTemplate = restTemplate;
+        this.commissionsRepository = commissionsRepository;
+        this.exchangeClient = exchangeClient;
+    }
+
+    public Cache getCacheByName(String cacheName) {
+        return cacheManager.getCache(cacheName);
+    }
 
     @Transactional
+
     public ResponseEntity<Object> addTransaction(RequestType requestBody) {
 
         Date requestedDate = requestBody.date();
@@ -39,24 +52,21 @@ public class Service {
         String dateYearMonthDay = simpleDateFormat.format(requestedDate);
         String thisTransactionCurrency = requestBody.currency();
         // get rates
-        ResponseEntity<Object> responseEntity = restTemplate.exchange("https://api.exchangerate.host/" + dateYearMonthDay, HttpMethod.GET, HttpEntity.EMPTY, Object.class);
+        //ResponseEntity<Rate> responseEntity = exchangeClient.getRates(requestBody);
 
-        if (!responseEntity.getStatusCode().equals(HttpStatus.OK)) {
-            return new ResponseEntity<>("Getting currency rates failed.", HttpStatus.INTERNAL_SERVER_ERROR);
-        } else {
+
             BigDecimal thisTransactionAmount = requestBody.amount();
             BigDecimal thisTransactionAmountInEUR;
             int clientId = requestBody.client_id();
             if (!thisTransactionCurrency.equals(EUR)) {
-                Object currencyRateObject = ((Map) ((Map) responseEntity.getBody()).get("rates")).get(thisTransactionCurrency);
-                BigDecimal currencyRate = null;
-                if (currencyRateObject instanceof Double currencyRateDouble) {
-                    currencyRate = BigDecimal.valueOf(currencyRateDouble);
-                } else if (currencyRateObject instanceof BigDecimal currencyRateBigDecimal) {
-                    currencyRate = currencyRateBigDecimal;
-                }
+                //Object currencyRateObject = ((Map) ((Map) responseEntity.getBody()).get("rates")).get(thisTransactionCurrency);
+                BigDecimal currencyRateObject = getRates(requestBody).getRates().get(thisTransactionCurrency);
+//                BigDecimal currencyRate = null;
+//                if (currencyRateObject instanceof BigDecimal currencyRateBigDecimal) {
+//                    currencyRate = currencyRateBigDecimal;
+//                }
                 // convert thisTransactionAmount to EUR with 2 DECIMAL
-                thisTransactionAmountInEUR = thisTransactionAmount.divide(currencyRate, 2, RoundingMode.CEILING);
+                thisTransactionAmountInEUR = thisTransactionAmount.divide(currencyRateObject, 2, RoundingMode.CEILING);
                 log.info("Client client_id {} converted {} {} to {} {}", clientId, thisTransactionAmount, thisTransactionCurrency, thisTransactionAmountInEUR, EUR);
             } else {
                 thisTransactionAmountInEUR = thisTransactionAmount;
@@ -117,7 +127,7 @@ public class Service {
                 commissionAppliedRule = CommissionApplied.RULE1;
             }
             resultCommission = resultCommission.setScale(2, RoundingMode.CEILING);
-            log.info("Client client_id {} applied commision {} = {} EUR on {}", clientId, commissionAppliedRule.toString(), resultCommission, dateYearMonthDay);
+            log.info("Client client_id {} applied commision {} = {} EUR on {}", clientId, commissionAppliedRule, resultCommission, dateYearMonthDay);
 
             // get current date CommissionType
             CommissionType commissionType = commissionsRepository.findByIdAndDate(clientId, requestedDate);
@@ -132,6 +142,13 @@ public class Service {
             commissionsRepository.save(commissionType);
 
             return new ResponseEntity<>(new ResponseType(resultCommission, EUR), HttpStatus.CREATED);
-        }
+
+    }
+
+
+    public RateDto getRates(RequestType requestBody){
+        ResponseEntity<RateDto> ratesEntity = exchangeClient.getRates(requestBody.date());
+        if(!ratesEntity.getStatusCode().equals(HttpStatus.OK)) throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "Getting currency rates failed.");
+        return ratesEntity.getBody();
     }
 }

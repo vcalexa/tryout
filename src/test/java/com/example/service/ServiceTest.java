@@ -23,6 +23,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
 
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
+
 @WebMvcTest(Service.class)
 class ServiceTest {
 
@@ -74,9 +77,9 @@ class ServiceTest {
 		int currentTurnover = 100;
 		double expectedCommission = 0.11;
 
-		Mockito.when(restTemplate.exchange(Mockito.anyString(), Mockito.any(HttpMethod.class), Mockito.any(HttpEntity.class), Mockito.any(Class.class))).thenReturn(new ResponseEntity <Object>(responseBodyMap, HttpStatus.OK));
-		Mockito.when(commissionsRepository.getClientSumOfTurnoverPerMonth(Mockito.anyInt(), Mockito.anyString())).thenReturn(BigDecimal.valueOf(consumedTurnoverPerMonth));
-		Mockito.when(commissionsRepository.findByIdAndDate(Mockito.anyInt(), Mockito.any(Date.class))).thenReturn(new CommissionType(0, clientId, requestedDate, BigDecimal.valueOf(consumedTurnoverForCurrentDay)));
+		when(restTemplate.exchange(Mockito.anyString(), any(HttpMethod.class), any(HttpEntity.class), any(Class.class))).thenReturn(new ResponseEntity <Object>(responseBodyMap, HttpStatus.OK));
+		when(commissionsRepository.getClientSumOfTurnoverPerMonth(Mockito.anyInt(), Mockito.anyString())).thenReturn(BigDecimal.valueOf(consumedTurnoverPerMonth));
+		when(commissionsRepository.findByIdAndDate(Mockito.anyInt(), any(Date.class))).thenReturn(new CommissionType(0, clientId, requestedDate, BigDecimal.valueOf(consumedTurnoverForCurrentDay)));
 
 		ResponseEntity<?> responseEntity = service.addTransaction(new RequestType(requestedDate, BigDecimal.valueOf(currentTurnover), amountCurrency, clientId));
 
@@ -92,9 +95,9 @@ class ServiceTest {
 		int currentTurnover = 100;
 		double expectedCommission = 0.05;
 
-		Mockito.when(restTemplate.exchange(Mockito.anyString(), Mockito.any(HttpMethod.class), Mockito.any(HttpEntity.class), Mockito.any(Class.class))).thenReturn(new ResponseEntity <Object>(responseBodyMap, HttpStatus.OK));
-		Mockito.when(commissionsRepository.getClientSumOfTurnoverPerMonth(Mockito.anyInt(),Mockito.anyString() )).thenReturn(BigDecimal.valueOf(consumedTurnoverPerMonth));
-		Mockito.when(commissionsRepository.findByIdAndDate(Mockito.anyInt(), Mockito.any(Date.class))).thenReturn(new CommissionType(0,clientId, requestedDate, BigDecimal.valueOf(consumedTurnoverForCurrentDay)));
+		when(restTemplate.exchange(Mockito.anyString(), any(HttpMethod.class), any(HttpEntity.class), any(Class.class))).thenReturn(new ResponseEntity <Object>(responseBodyMap, HttpStatus.OK));
+		when(commissionsRepository.getClientSumOfTurnoverPerMonth(Mockito.anyInt(),Mockito.anyString() )).thenReturn(BigDecimal.valueOf(consumedTurnoverPerMonth));
+		when(commissionsRepository.findByIdAndDate(Mockito.anyInt(), any(Date.class))).thenReturn(new CommissionType(0,clientId, requestedDate, BigDecimal.valueOf(consumedTurnoverForCurrentDay)));
 
 		ResponseEntity<?> responseEntity = service.addTransaction(new RequestType(requestedDate, BigDecimal.valueOf(currentTurnover), amountCurrency, clientId));
 
@@ -110,9 +113,9 @@ class ServiceTest {
 		int currentTurnover = 100;
 		double expectedCommission = 0.03;
 
-		Mockito.when(restTemplate.exchange(Mockito.anyString(), Mockito.any(HttpMethod.class), Mockito.any(HttpEntity.class), Mockito.any(Class.class))).thenReturn(new ResponseEntity <Object>(responseBodyMap, HttpStatus.OK));
-		Mockito.when(commissionsRepository.getClientSumOfTurnoverPerMonth(Mockito.anyInt(),Mockito.anyString() )).thenReturn(BigDecimal.valueOf(consumedTurnoverPerMonth));
-		Mockito.when(commissionsRepository.findByIdAndDate(Mockito.anyInt(), Mockito.any(Date.class))).thenReturn(new CommissionType(0,clientId, requestedDate, BigDecimal.valueOf(consumedTurnoverForCurrentDay)));
+		when(restTemplate.exchange(Mockito.anyString(), any(HttpMethod.class), any(HttpEntity.class), any(Class.class))).thenReturn(new ResponseEntity <Object>(responseBodyMap, HttpStatus.OK));
+		when(commissionsRepository.getClientSumOfTurnoverPerMonth(Mockito.anyInt(),Mockito.anyString() )).thenReturn(BigDecimal.valueOf(consumedTurnoverPerMonth));
+		when(commissionsRepository.findByIdAndDate(Mockito.anyInt(), any(Date.class))).thenReturn(new CommissionType(0,clientId, requestedDate, BigDecimal.valueOf(consumedTurnoverForCurrentDay)));
 
 		ResponseEntity<?> responseEntity = service.addTransaction(new RequestType(requestedDate, BigDecimal.valueOf(currentTurnover), amountCurrency, clientId));
 
@@ -128,9 +131,9 @@ class ServiceTest {
 		int currentTurnover = 100;
 		double expectedCommission = 0.03;
 
-		Mockito.when(restTemplate.exchange(Mockito.anyString(), Mockito.any(HttpMethod.class), Mockito.any(HttpEntity.class), Mockito.any(Class.class))).thenReturn(new ResponseEntity <Object>(responseBodyMap, HttpStatus.OK));
-		Mockito.when(commissionsRepository.getClientSumOfTurnoverPerMonth(Mockito.anyInt(),Mockito.anyString() )).thenReturn(BigDecimal.valueOf(consumedTurnoverPerMonth));
-		Mockito.when(commissionsRepository.findByIdAndDate(Mockito.anyInt(), Mockito.any(Date.class))).thenReturn(new CommissionType(0,clientId, requestedDate, BigDecimal.valueOf(consumedTurnoverForCurrentDay)));
+		when(restTemplate.exchange(Mockito.anyString(), any(HttpMethod.class), any(HttpEntity.class), any(Class.class))).thenReturn(new ResponseEntity <Object>(responseBodyMap, HttpStatus.OK));
+		when(commissionsRepository.getClientSumOfTurnoverPerMonth(Mockito.anyInt(),Mockito.anyString() )).thenReturn(BigDecimal.valueOf(consumedTurnoverPerMonth));
+		when(commissionsRepository.findByIdAndDate(Mockito.anyInt(), any(Date.class))).thenReturn(new CommissionType(0,clientId, requestedDate, BigDecimal.valueOf(consumedTurnoverForCurrentDay)));
 
 		ResponseEntity<?> responseEntity = service.addTransaction(new RequestType(requestedDate, BigDecimal.valueOf(currentTurnover), amountCurrency, clientId));
 
