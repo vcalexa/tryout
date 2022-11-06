@@ -8,13 +8,10 @@ import com.example.data.RequestType;
 import com.example.data.ResponseType;
 import com.example.repository.CommisionsRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -27,21 +24,14 @@ import java.util.Date;
 public class Service {
 
     private String EUR = "EUR";
-    CacheManager cacheManager;
-    private RestTemplate restTemplate;
     private CommisionsRepository commissionsRepository;
     private ExchangeClient exchangeClient;
 
-    public Service(CacheManager cacheManager, RestTemplate restTemplate, CommisionsRepository commissionsRepository, ExchangeClient exchangeClient) {
-        this.cacheManager = cacheManager;
-        this.restTemplate = restTemplate;
+    public Service(CommisionsRepository commissionsRepository, ExchangeClient exchangeClient) {
         this.commissionsRepository = commissionsRepository;
         this.exchangeClient = exchangeClient;
     }
 
-    public Cache getCacheByName(String cacheName) {
-        return cacheManager.getCache(cacheName);
-    }
 
     @Transactional
 
@@ -59,13 +49,7 @@ public class Service {
             BigDecimal thisTransactionAmountInEUR;
             int clientId = requestBody.client_id();
             if (!thisTransactionCurrency.equals(EUR)) {
-                //Object currencyRateObject = ((Map) ((Map) responseEntity.getBody()).get("rates")).get(thisTransactionCurrency);
                 BigDecimal currencyRateObject = getRates(requestBody).getRates().get(thisTransactionCurrency);
-//                BigDecimal currencyRate = null;
-//                if (currencyRateObject instanceof BigDecimal currencyRateBigDecimal) {
-//                    currencyRate = currencyRateBigDecimal;
-//                }
-                // convert thisTransactionAmount to EUR with 2 DECIMAL
                 thisTransactionAmountInEUR = thisTransactionAmount.divide(currencyRateObject, 2, RoundingMode.CEILING);
                 log.info("Client client_id {} converted {} {} to {} {}", clientId, thisTransactionAmount, thisTransactionCurrency, thisTransactionAmountInEUR, EUR);
             } else {
@@ -146,7 +130,7 @@ public class Service {
     }
 
 
-    public RateDto getRates(RequestType requestBody){
+    private RateDto getRates(RequestType requestBody){
         ResponseEntity<RateDto> ratesEntity = exchangeClient.getRates(requestBody.date());
         if(!ratesEntity.getStatusCode().equals(HttpStatus.OK)) throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "Getting currency rates failed.");
         return ratesEntity.getBody();

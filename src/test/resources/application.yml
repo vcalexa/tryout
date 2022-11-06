@@ -13,3 +13,5 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     show-sql: false
+cache:
+  timer: 3600000
